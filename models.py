@@ -7,7 +7,13 @@ class Course(models.Model):
 
 class Lesson(models.Model):
     title = models.CharField(max_length=100)
+    description = models.CharField(max_length=500, default="")
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
+
+class Enrollment(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    date_enrolled = models.DateField(auto_now_add=True)
 
 class Question(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
@@ -17,7 +23,8 @@ class Question(models.Model):
     def is_get_score(self, selected_ids):
         all_answers = self.choice_set.filter(is_correct=True).count()
         selected_correct = self.choice_set.filter(is_correct=True, id__in=selected_ids).count()
-        if all_answers == selected_correct:
+        selected_wrong = self.choice_set.filter(is_correct=False, id__in=selected_ids).count()
+        if all_answers == selected_correct and selected_wrong == 0:
             return True
         return False
 
@@ -27,5 +34,5 @@ class Choice(models.Model):
     is_correct = models.BooleanField(default=False)
 
 class Submission(models.Model):
-    enrollment = models.IntegerField()
+    enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE)
     choices = models.ManyToManyField(Choice)
